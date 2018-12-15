@@ -8,15 +8,15 @@ from skimage.transform import resize
 from scipy.spatial import distance
 from keras.models import load_model
 
-valid = "/media/sf_share/works/facenet_keras/door_faces/valid/"
-imgPathAppend = "/media/sf_datasets/Classified/Peoples_Comes_in_Door/20180722"
+valid = "door_faces/valid/"
+#imgPathAppend = "/media/sf_datasets/Classified/Peoples_Comes_in_Door/20180722"
 #compare = [ imgPathAppend + "/albert.chen 陳光磊/csi_2592x1944_20180601_151551.jpg",
 #            imgPathAppend  + "/andrew.chuang 莊昭宏/csi_2592x1944_20180530_120421.jpg",
 #            imgPathAppend + "/andrew.lee 李季錞/csi_2592x1944_20180531_141401.jpg",
 #            imgPathAppend + "/anita.hsu 許卉平/csi_2592x1944_20180529_081715.jpg",
 #            imgPathAppend + "/akai.chen 陳智凱/csi_2592x1944_20180601_151551.jpg"
 #    ]
-compare = "/media/sf_share/works/facenet_keras/door_faces/compare/"
+compare = "door_faces/compare/"
 
 min_faceSzie = (90, 90)
 cascade_path = 'haarcascade_frontalface_alt2.xml'
