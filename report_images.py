@@ -5,6 +5,8 @@ import os, time
 import cv2
 import h5py
 import imutils
+import dlib
+from imutils.face_utils import rect_to_bb
 from skimage.transform import resize
 from scipy.spatial import distance
 from keras.models import load_model
@@ -14,7 +16,7 @@ compare = "report/test/"
 
 min_faceSzie = (90, 90)
 cascade_path = 'haarcascade_frontalface_alt2.xml'
-min_score = 0.8
+min_score = 0.55
 image_size = 160
 
 make_dataset = True
@@ -24,7 +26,7 @@ dataset_file = "officedoor.h5"
 #pretrained Keras model (trained by MS-Celeb-1M dataset)
 model_path = 'model/facenet_keras.h5'
 model = load_model(model_path)
-
+detector = dlib.get_frontal_face_detector()
 #-----------------------------------------------------------------------------
 
 def prewhiten(x):
@@ -48,9 +50,18 @@ def l2_normalize(x, axis=-1, epsilon=1e-10):
     return output
 
 def align_image(img, margin):
-    cascade = cv2.CascadeClassifier(cascade_path)
+    #Cascade
+    #cascade = cv2.CascadeClassifier(cascade_path)
+    #faces = cascade.detectMultiScale(img, scaleFactor=1.15, minNeighbors=5)
 
-    faces = cascade.detectMultiScale(img, scaleFactor=1.1, minNeighbors=3)
+    #Dlib
+    faces = []
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    rects = detector(gray, 2)
+    for rect in rects:
+        (x, y, w, h) = rect_to_bb(rect)
+        faces.append((x,y,w,h))
+
     if(len(faces)>0):
         imgFaces = []
         bboxes = []
@@ -101,13 +112,13 @@ def face2name(face, faceEMBS, faceNames):
     return smallist_id, faceNames[smallist_id].decode(), smallist_embs
 
 def draw_text(bbox, txt, img):
-    fontSize = round(img.shape[0] / 730, 1)
+    fontSize = round(img.shape[0] / 930, 1)
     if(fontSize<0.35): fontSize = 0.35
     boldNum = int(img.shape[0] / 500)
     if(boldNum<1): boldNum = 1
 
     cv2.rectangle(img,(bbox[0],bbox[1]),(bbox[0]+bbox[2],bbox[1]+bbox[3]),(0,255,0),boldNum)
-    cv2.putText(img, txt, (bbox[0], bbox[1]-(boldNum*3)), cv2.FONT_HERSHEY_COMPLEX, fontSize, (255,255,255), boldNum)
+    cv2.putText(img, txt, (bbox[0], bbox[1]-(boldNum*3)), cv2.FONT_HERSHEY_COMPLEX, fontSize, (255,0,255), boldNum)
 
     return img
 
@@ -127,6 +138,7 @@ if(make_dataset == True and load_dataset == False):
 
             if(file_extension.upper() in (".JPG", "PNG", "JPEG", "BMP")):
                 imgValid = cv2.imread(valid+username+"/"+img_file)
+                print(valid+username+"/"+img_file)
                 aligned, _ = align_image(imgValid, 6)
                 if(aligned is None):
                     print("Cannot find any face in image: {}".format(valid+username+"/"+img_file))
@@ -165,8 +177,8 @@ if(len(valid_names)>0):
                         #print("    face #"+str( i))
                         valid_id, valid_name, score = face2name(aligned[id], valid_embs, valid_names)
                         if(score<min_score):
-                            #valid_name = valid_name.split(" ")[0]
-                            imgCompared = draw_text(face, valid_name + "(" + str(round(score,3)) + ")", imgCompared)
+                            #imgCompared = draw_text(face, valid_name + "(" + str(round(score,3)) + ")", imgCompared)
+                            imgCompared = draw_text(face, valid_name, imgCompared)
 
                     cv2.imshow("People:"+str(i),imutils.resize(imgCompared, width=640))
                     cv2.waitKey(0)
