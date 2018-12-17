@@ -18,6 +18,7 @@ min_faceSzie = (90, 90)
 cascade_path = 'haarcascade_frontalface_alt2.xml'
 min_score = 0.55
 image_size = 160
+giveupScore = 0.8
 
 make_dataset = True
 load_dataset = False
@@ -60,7 +61,7 @@ def align_image(img, margin):
     rects = detector(gray, 2)
     for rect in rects:
         (x, y, w, h) = rect_to_bb(rect)
-        faces.append((x,y,w,h))
+        faces.append((int(x),int(y),int(w),int(h)))
 
     if(len(faces)>0):
         imgFaces = []
@@ -104,10 +105,15 @@ def face2name(face, faceEMBS, faceNames):
     smallist_embs = 999
     for id, valid in enumerate(faceEMBS):
         distanceNum = distance.euclidean(embs, valid)
-        print(distanceNum)
-        if(smallist_embs>distanceNum):
+        if(distanceNum>giveupScore):
             smallist_embs = distanceNum
             smallist_id = id
+            print(distanceNum, "--> give up")
+            break
+        else:
+            if(smallist_embs>distanceNum):
+                smallist_embs = distanceNum
+                smallist_id = id
 
     return smallist_id, faceNames[smallist_id].decode(), smallist_embs
 
@@ -139,7 +145,7 @@ if(make_dataset == True and load_dataset == False):
             if(file_extension.upper() in (".JPG", "PNG", "JPEG", "BMP")):
                 imgValid = cv2.imread(valid+username+"/"+img_file)
                 print(valid+username+"/"+img_file)
-                aligned, _ = align_image(imgValid, 6)
+                aligned, _ = align_image(imgValid, 4)
                 if(aligned is None):
                     print("Cannot find any face in image: {}".format(valid+username+"/"+img_file))
                 else:
@@ -183,8 +189,8 @@ if(len(valid_names)>0):
                     cv2.imshow("People:"+str(i),imutils.resize(imgCompared, width=640))
                     cv2.waitKey(0)
                     i += 1
-                    #cv2.imwrite(filename+"_recognized.jpg", imgCompared)
-                    #print("Write to "+filename+"_recognized.jpg")
+                    cv2.imwrite(filename+"_"+str(i)+".jpg", imgCompared)
+                    print("Write to "+filename+"_"+str(i)+".jpg")
             else:
                 cv2.putText(imgCompared, "No face", (20,20), cv2.FONT_HERSHEY_COMPLEX, 1.8, (0,255,0), 3)
 
