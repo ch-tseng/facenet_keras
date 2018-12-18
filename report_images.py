@@ -19,6 +19,7 @@ cascade_path = 'haarcascade_frontalface_alt2.xml'
 min_score = 0.55
 image_size = 160
 giveupScore = 0.8
+black_padding_width = 8  #add padding width for the face area
 
 make_dataset = True
 load_dataset = False
@@ -71,9 +72,10 @@ def align_image(img, margin):
             if(w>min_faceSzie[0] and h>min_faceSzie[1]):
                 print("w,h=",w,h)
                 faceArea = img[y:y+h, x:x+w]
+                w = faceArea.shape[1]
+                h = faceArea.shape[0]
                 faceMargin = np.zeros((h+margin*2, w+margin*2, 3), dtype = "uint8")
                 faceMargin[margin:margin+h, margin:margin+w] = faceArea
-
                 cv2.imwrite("tmp/"+str(time.time())+".jpg", faceMargin)
                 #aligned = resize(faceMargin, (image_size, image_size), mode='reflect')
                 aligned = cv2.resize(faceMargin ,(image_size, image_size))
@@ -145,7 +147,7 @@ if(make_dataset == True and load_dataset == False):
             if(file_extension.upper() in (".JPG", "PNG", "JPEG", "BMP")):
                 imgValid = cv2.imread(valid+username+"/"+img_file)
                 print(valid+username+"/"+img_file)
-                aligned, _ = align_image(imgValid, 4)
+                aligned, _ = align_image(imgValid, black_padding_width)
                 if(aligned is None):
                     print("Cannot find any face in image: {}".format(valid+username+"/"+img_file))
                 else:
@@ -187,7 +189,7 @@ if(len(valid_names)>0):
                             imgCompared = draw_text(face, valid_name, imgCompared)
 
                     cv2.imshow("People:"+str(i),imutils.resize(imgCompared, width=640))
-                    cv2.waitKey(0)
+                    cv2.waitKey(1)
                     i += 1
                     cv2.imwrite(filename+"_"+str(i)+".jpg", imgCompared)
                     print("Write to "+filename+"_"+str(i)+".jpg")
