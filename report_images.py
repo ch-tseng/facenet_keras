@@ -32,6 +32,7 @@ detector = dlib.get_frontal_face_detector()
 #-----------------------------------------------------------------------------
 
 def prewhiten(x):
+    #cv2.imshow("Before", x)
     if x.ndim == 4:
         axis = (1, 2, 3)
         size = x[0].size
@@ -45,6 +46,9 @@ def prewhiten(x):
     std = np.std(x, axis=axis, keepdims=True)
     std_adj = np.maximum(std, 1.0/np.sqrt(size))
     y = (x - mean) / std_adj
+
+    #cv2.imshow("After", y)
+    #cv2.waitKey(0)
     return y
 
 def l2_normalize(x, axis=-1, epsilon=1e-10):
@@ -181,23 +185,22 @@ if(len(valid_names)>0):
             aligned, faceBoxes = align_image(imgCompared, 6)
             if(faceBoxes is not None):
                 if(len(faceBoxes)>0):
-                    #print("Face: " + str(len(faceBoxes)))
                     for id, face in enumerate(faceBoxes):
-                        #print("    face #"+str( i))
-                        faceImg = preProcess(aligned[id])
-                        valid_id, valid_name, score = face2name(faceImg, valid_embs, valid_names)
+                        valid_id, valid_name, score = face2name(aligned[id], valid_embs, valid_names)
                         if(score<min_score):
                             #imgCompared = draw_text(face, valid_name + "(" + str(round(score,3)) + ")", imgCompared)
                             imgCompared = draw_text(face, valid_name, imgCompared)
 
-                    cv2.imshow("People",imutils.resize(imgCompared, width=640))
-                    cv2.waitKey(1)
+                    #cv2.imshow("People",imutils.resize(imgCompared, width=640))
+                    #cv2.waitKey(1)
                     i += 1
                     #cv2.imwrite("output/"+filename+"_"+str(i)+".jpg", imgCompared)
                     #print("Write to output/"+filename+"_"+str(i)+".jpg")
             else:
                 cv2.putText(imgCompared, "No face", (20,20), cv2.FONT_HERSHEY_COMPLEX, 1.8, (0,255,0), 3)
 
+            cv2.imshow("People",imutils.resize(imgCompared, width=640))
+            cv2.waitKey(1)
             cv2.imwrite("output/"+filename+"_"+str(i)+".jpg", imgCompared)
             print("Write to output/"+filename+"_"+str(i)+".jpg")
 
