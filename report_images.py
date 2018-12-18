@@ -16,13 +16,13 @@ compare = "report/test/"
 
 min_faceSzie = (90, 90)
 cascade_path = 'haarcascade_frontalface_alt2.xml'
-min_score = 0.55
+min_score = 0.75
 image_size = 160
 giveupScore = 0.8
 black_padding_width = 8  #add padding width for the face area
 
-make_dataset = True
-load_dataset = False
+make_dataset = False
+load_dataset = True
 dataset_file = "officedoor.h5"
 
 #pretrained Keras model (trained by MS-Celeb-1M dataset)
@@ -107,15 +107,16 @@ def face2name(face, faceEMBS, faceNames):
     smallist_embs = 999
     for id, valid in enumerate(faceEMBS):
         distanceNum = distance.euclidean(embs, valid)
-        if(distanceNum>giveupScore):
+        #if(distanceNum>giveupScore):
+        #    smallist_embs = distanceNum
+        #    smallist_id = id
+        #    print(distanceNum, "--> give up")
+            #break
+        #else:
+        print(faceNames[id].decode(), distanceNum)
+        if(smallist_embs>distanceNum):
             smallist_embs = distanceNum
             smallist_id = id
-            print(distanceNum, "--> give up")
-            break
-        else:
-            if(smallist_embs>distanceNum):
-                smallist_embs = distanceNum
-                smallist_id = id
 
     return smallist_id, faceNames[smallist_id].decode(), smallist_embs
 
@@ -183,18 +184,22 @@ if(len(valid_names)>0):
                     #print("Face: " + str(len(faceBoxes)))
                     for id, face in enumerate(faceBoxes):
                         #print("    face #"+str( i))
-                        valid_id, valid_name, score = face2name(aligned[id], valid_embs, valid_names)
+                        faceImg = preProcess(aligned[id])
+                        valid_id, valid_name, score = face2name(faceImg, valid_embs, valid_names)
                         if(score<min_score):
                             #imgCompared = draw_text(face, valid_name + "(" + str(round(score,3)) + ")", imgCompared)
                             imgCompared = draw_text(face, valid_name, imgCompared)
 
-                    cv2.imshow("People:"+str(i),imutils.resize(imgCompared, width=640))
+                    cv2.imshow("People",imutils.resize(imgCompared, width=640))
                     cv2.waitKey(1)
                     i += 1
-                    cv2.imwrite(filename+"_"+str(i)+".jpg", imgCompared)
-                    print("Write to "+filename+"_"+str(i)+".jpg")
+                    #cv2.imwrite("output/"+filename+"_"+str(i)+".jpg", imgCompared)
+                    #print("Write to output/"+filename+"_"+str(i)+".jpg")
             else:
                 cv2.putText(imgCompared, "No face", (20,20), cv2.FONT_HERSHEY_COMPLEX, 1.8, (0,255,0), 3)
+
+            cv2.imwrite("output/"+filename+"_"+str(i)+".jpg", imgCompared)
+            print("Write to output/"+filename+"_"+str(i)+".jpg")
 
 else:
     print("There is no any face in valid images.")
